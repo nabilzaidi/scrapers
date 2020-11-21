@@ -1,0 +1,3 @@
+from scrapers.scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
+from scrapers.scrap_avisverifies import scrap_reviews_avisverifies, AvisVerifiesScraper
+from scrapers.scrap_trustpilot import scrap_reviews_trustpilot, TrustpilotScraper
