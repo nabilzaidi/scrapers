@@ -69,7 +69,7 @@ class TrustpilotScraper(ReviewScraper):
         return len(page.xpath("//a[@data-page-number='next-page']")) == 0
 
 
-def scrap_reviews_truspilot(url):
+def scrap_reviews_trustpilot(url):
     tps = TrustpilotScraper(url)
     info = tps.scrap_website()
     return info
