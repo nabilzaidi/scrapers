@@ -14,7 +14,7 @@ def _aux_clean_number(number_text):
     return int(number_text[0])
 
 class ReviewScraper:
-    def __init__(self, url, page_argument="page"):
+    def __init__(self, url, page_argument):
         self.url = url
         self.n_reviews = None
         self.reviews = []
@@ -115,5 +115,9 @@ class ReviewScraper:
     def scrap_website(self):
         self.scrap_n_reviews()
         self.scrap_reviews()
-        res = self.__dict__
+        res = {
+        	"url": self.url,
+        	"n_reviews": self.n_reviews,
+        	"reviews": self.reviews
+        }
         return res

@@ -1,5 +1,5 @@
 
-from scrapers.scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
+from .scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
 import json
 import re
 
@@ -7,7 +7,8 @@ import re
 class TrustpilotScraper(ReviewScraper):
     def __init__(self, url):
         page_argument = "page"
-        super().__init__(url, page_argument)
+        super().__init__(url=url,
+                        page_argument=page_argument)
     
     def _parse_review(self, review_block):
         info = dict()
@@ -21,10 +22,10 @@ class TrustpilotScraper(ReviewScraper):
         info["review"] = clean_xpath_res(review_block.xpath(xpath_review))
         xpath_n_reviews = ".//div[@class='consumer-information__review-count']//text()"
         info["n_reviews_customer_hide"] = clean_xpath_res(review_block.xpath(xpath_n_reviews))
-        xpath_is_verified_info = ".//div[contains(@class , 'review-verified')]//text()"
+        xpath_is_verified_info = ".//div[contains(@class , 'review-content-header__review-labels')]/script/text()"
         is_verified_info = review_block.xpath(xpath_is_verified_info)
-        if len(is_verified_info) > 1:
-            is_verified_info = json.loads(is_verified_info[1])
+        if len(is_verified_info) > 0:
+            is_verified_info = json.loads(is_verified_info[0])
         else:
             is_verified_info = dict()
         info["is_verified_hide"] = is_verified_info.get('isVerified', False)

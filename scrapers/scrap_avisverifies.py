@@ -1,11 +1,12 @@
-from scrapers.scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
+from .scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
 import re
 
 
 class AvisVerifiesScraper(ReviewScraper):
     def __init__(self, url):
         page_argument = "p"
-        super().__init__(url, page_argument)
+        super().__init__(url=url,
+                        page_argument=page_argument)
     
     def _parse_review(self, review_block):
         info = dict()
