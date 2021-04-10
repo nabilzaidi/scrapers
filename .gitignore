@@ -1,4 +1,5 @@
 OLD/
+*.DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -57,3 +58,5 @@ docs/_build/
 # PyBuilder
 target/
 
+*.ipynb_checkpoints/
+.ipynb_checkpoints/

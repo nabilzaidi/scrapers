@@ -5,18 +5,31 @@ import re
 
 
 class TrustpilotScraper(ReviewScraper):
-    def __init__(self, url, company=""):
-        # page_argument = "page"
+    def __init__(self):
         next_page_xpath = "//a[@data-page-number='next-page']/@href"
-        if not company:
-            company = url
-        super().__init__(url=url,
-                        next_page_xpath=next_page_xpath,
-                        company=company)
+        super().__init__(next_page_xpath=next_page_xpath)
+
+    def get_init_info(self, url):
+        init_info = dict()
+
+        page_html = self._get_html(url)
+
+        xpath_n_reviews = "//h2[@class='header--inline']//text()"
+        n_reviews_str = re.sub("[^0-9]", "", page_html.xpath(xpath_n_reviews)[0])
+        n_reviews = int(n_reviews_str.replace(" ", "").replace(".", ""))
+        init_info["n_reviews"] = n_reviews
+
+        xpath_company_name = "//span[@class='multi-size-header__big']//text()"
+        init_info["company_name"] = clean_xpath_res(page_html.xpath(xpath_company_name))
+
+        n_pages_max = n_reviews // 20 + 1
+        init_info["n_pages_max"] = n_pages_max
+
+        return init_info
+
     
     def _parse_review(self, review_block):
         info = dict()
-        info["company"] = self.company
         xpath_id = ".//article/@id"
         info["review_id"] = clean_xpath_res(review_block.xpath(xpath_id))
         xpath_rating = ".//div[@class='star-rating star-rating--medium']/img/@alt"
@@ -65,11 +78,11 @@ class TrustpilotScraper(ReviewScraper):
                 info.append(self.clean_review(res))
         return info
 
-    def scrap_n_reviews(self):
-        page_html = self._get_html(self.url)
-        xpath_n_reviews = "//h2[@class='header--inline']//text()"
-        n_reviews_str = re.sub("[^0-9]", "", page_html.xpath(xpath_n_reviews)[0])
-        self.n_reviews = int(n_reviews_str.replace(" ", "").replace(".", ""))
+    # def scrap_n_reviews(self):
+    #     page_html = self._get_html(self.url)
+    #     xpath_n_reviews = "//h2[@class='header--inline']//text()"
+    #     n_reviews_str = re.sub("[^0-9]", "", page_html.xpath(xpath_n_reviews)[0])
+    #     self.n_reviews = int(n_reviews_str.replace(" ", "").replace(".", ""))
     
     def get_n_pages(self):
         n_pages = self.n_reviews // 20 + 1 # 20 reviews per page
@@ -81,6 +94,6 @@ class TrustpilotScraper(ReviewScraper):
 
 
 def scrap_reviews_trustpilot(url):
-    tps = TrustpilotScraper(url)
-    info = tps.scrap_website()
+    tps = TrustpilotScraper()
+    info = tps.scrap_reviews(url)
     return info

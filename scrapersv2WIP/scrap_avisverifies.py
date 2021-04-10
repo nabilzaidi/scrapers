@@ -18,9 +18,6 @@ class AvisVerifiesScraper(ReviewScraper):
         info["review"] = clean_xpath_res(review_block.xpath(xpath_review))
         xpath_details = ".//div[@class='details suite']//text()"
         info["details_hide"] = clean_xpath_res(review_block.xpath(xpath_details))
-        xpath_answer = ".//div[@class='answers']/div[@class='merchant']//div[@class='text']//text()"
-        info["answer"] = clean_xpath_res(review_block.xpath(xpath_answer))
-        info["company_has_answered"] = len(info["answer"]) > 0
         return info
 
     def clean_review(self, r):

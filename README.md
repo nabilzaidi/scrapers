@@ -1,7 +1,5 @@
 # Scrapers
 
-[![N|Solid](https://cldup.com/dTxpPi9lDf.thumb.png)](https://nodesource.com/products/nsolid)
-
 This package contains scrapers for websites and generic tools. 
 
 ## scrap_trustpilot.py
@@ -52,7 +50,7 @@ res
         'rating_star_cleaned_hide': 5,
         'date_year_month_hide': '2020-11',
         'text_cleaned_hide': 'commande livree rapidement \r\nparfait',
-         'page': 1
+        'page': 1
     },
     ...
  ]}

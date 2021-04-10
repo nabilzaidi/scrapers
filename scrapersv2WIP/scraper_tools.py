@@ -8,24 +8,19 @@ from urllib.parse import (
 
 
 def clean_xpath_res(l):
-    return "\n".join(l).strip()
+    return unidecode("\n".join(l).strip())
 
-def _aux_clean_number(number_text):
-    return int(number_text[0])
+def _aux_clean_number(number_res):
+    return int(number_res[0])
+
 
 class ReviewScraper:
-    def __init__(self, url, page_argument=None, next_page_xpath="", company=""):
-        self.url = url
-        self.n_reviews = None
-        self.reviews = []
+    def __init__(self, page_argument=None, next_page_xpath=""):
         self.page_argument = page_argument
         self.next_page_xpath = next_page_xpath
-        self.company = self.get_company_name()
 
-    def get_company_name(self):
-        company_name_xpath = "//span[@class='multi-size-header__big']//text()"
-        page_html = self._get_html(self.url)
-        return clean_xpath_res(page_html.xpath(company_name_xpath))
+    def get_init_info(self, url):
+        return dict()
 
     def _current_page(self, url):
         parsed_get_args = dict(parse_qsl(urlparse(unquote(url)).query))
@@ -85,7 +80,7 @@ class ReviewScraper:
     def is_last_page(self, page):
         return True
 
-    def _pause(self, n):
+    def _pause(self, n, n_reviews):
         if n % 1000 == 0:
             time_sleep = 25
         elif n % 100 == 0:
@@ -95,49 +90,55 @@ class ReviewScraper:
         else:
             time_sleep = 0
 
-        if self.n_reviews > 10000:
+        if n_reviews > 10000:
             time_sleep = 3 * time_sleep + 1
-        elif self.n_reviews > 1000:
+        elif n_reviews > 1000:
             time_sleep *= 2
 
         if time_sleep > 5:
             print(f"Sleeping for {time_sleep}sec to avoid being blocked")
         if time_sleep:
             sleep(time_sleep)
+
+    def logger(self, url, n_current, n_start, n_pages_max):
+        print(f"Done with {url}")
+        n_done = (n_current - n_start + 1)
+        n_total = (n_pages_max - n_start + 1)
+        percent_done = int( n_current / n_total * 100)
+        print(f"Done {n_current}/{n_total} ({percent_done}%)")
     
-    def scrap_reviews(self):
+    def _scrap_reviews_unique_url(self, url):
         print("Starting to scrap...")
-        
-        n_pages = self.get_n_pages()
-        url = self.url
+        reviews = list()
+
+        init_info = self.get_init_info(url)
+        n_pages_max = init_info["n_pages_max"]
+
         n_start = self._current_page(url)
-        for n in range(n_start, n_pages + 1):
+
+        for n in range(n_start, n_pages_max + 1):
             page_html = self._get_html(url)
             page_info = self._parse_page(page_html)
-            if len(page_info) == 0:
-                break
             for i in page_info:
                 i["page"] = n
-                i["company"] = self.company
-            self.reviews += page_info
+                i.update(init_info)
+            reviews += page_info
             
-            print(f"Done with {url}")
-            n_done = (n - n_start + 1)
-            n_total = (n_pages - n_start + 1)
-            percent_done = int( n_done / n_total * 100)
-            print(f"Done {n_done}/{n_total} ({percent_done}%)")
+            
+            self.logger(url, n, n_start, n_pages_max)
 
             if self.is_last_page(page_html):
                 break
-            self._pause(n - n_start + 1)
+
+            self._pause(n - n_start + 1, n_pages_max)
             url = self._next_url(url, page_html)
-    
-    def scrap_website(self):
-        self.scrap_n_reviews()
-        self.scrap_reviews()
-        res = {
-        	"url": self.url,
-        	"n_reviews": self.n_reviews,
-        	"reviews": self.reviews
-        }
-        return res
+
+        return reviews
+
+    def scrap_reviews(self, *list_urls):
+    	reviews = []
+
+    	for url in list_urls:
+    		reviews += self._scrap_reviews_unique_url(url)
+
+    	return reviews
