@@ -1,3 +1,4 @@
+import sys
 from lxml import html
 import requests
 from unidecode import unidecode
@@ -5,6 +6,12 @@ from time import sleep
 from urllib.parse import (
         urljoin, urlencode, unquote, urlparse, parse_qsl, ParseResult
     )
+
+
+def logger(msg):
+    sys.stdout.write('\r')
+    sys.stdout.flush()
+    sys.stdout.write(msg)
 
 
 def clean_xpath_res(l):
@@ -101,7 +108,7 @@ class ReviewScraper:
             time_sleep *= 2
 
         if time_sleep > 5:
-            print(f"Sleeping for {time_sleep}sec to avoid being blocked")
+            logger(f"Sleeping for {time_sleep}sec to avoid being blocked")
         if time_sleep:
             sleep(time_sleep)
     
@@ -120,12 +127,14 @@ class ReviewScraper:
                 i["page"] = n
                 i["company"] = self.company
             self.reviews += page_info
-            
-            print(f"Done with {url}")
+
             n_done = (n - n_start + 1)
             n_total = (n_pages - n_start + 1)
             percent_done = int( n_done / n_total * 100)
-            print(f"Done {n_done}/{n_total} ({percent_done}%)")
+
+            display_msg = f"Done {n_done}/{n_total} ({percent_done}%): {url}"
+            
+            logger(display_msg)
 
             if self.is_last_page(page_html):
                 break

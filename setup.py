@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-version = '0.3'
+version = '0.5'
 
 setup(
   name = 'scrapers',         # How you named your package folder (MyLib)
