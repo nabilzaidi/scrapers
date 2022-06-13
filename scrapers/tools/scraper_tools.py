@@ -6,73 +6,39 @@ from time import sleep
 from urllib.parse import (
         urljoin, urlencode, unquote, urlparse, parse_qsl, ParseResult
     )
+from .generic_tools import logger, clean_xpath_res, _aux_clean_number
+from .html_tools import get_html, current_page, next_url
 
-
-def logger(msg):
-    sys.stdout.write('\r')
-    sys.stdout.flush()
-    sys.stdout.write(msg)
-
-
-def clean_xpath_res(l):
-    return "\n".join(l).strip()
-
-def _aux_clean_number(number_text):
-    return int(number_text[0])
 
 class ReviewScraper:
-    def __init__(self, url, page_argument=None, next_page_xpath="", company=""):
+    def __init__(self, url, page_argument=None, next_page_xpath="", 
+                company="", company_name_xpath="",
+                use_chrome=False, headless=True, force_new=False):
         self.url = url
         self.n_reviews = None
         self.reviews = []
         self.page_argument = page_argument
         self.next_page_xpath = next_page_xpath
+        self.company = company
+        self.company_name_xpath = company_name_xpath
+        self.use_chrome = use_chrome
+        self.headless = headless
+        self.force_new = force_new
         self.company = self.get_company_name()
 
     def get_company_name(self):
-        company_name_xpath = "//span[@class='multi-size-header__big']//text()"
-        page_html = self._get_html(self.url)
-        return clean_xpath_res(page_html.xpath(company_name_xpath))
-
-    def _current_page(self, url):
-        parsed_get_args = dict(parse_qsl(urlparse(unquote(url)).query))
-        return int(parsed_get_args.get(self.page_argument, 1))
-
-    def _next_url_page_argument(self, url):
-        # Unquoting URL first so we don't loose existing args
-        url = unquote(url)
-        # Extracting url info
-        parsed_url = urlparse(url)
-        # Extracting URL arguments from parsed URL
-        get_args = parsed_url.query
-        # Converting URL arguments to dict
-        parsed_get_args = dict(parse_qsl(get_args))
-        parsed_get_args[self.page_argument] = int(parsed_get_args.get(self.page_argument, 1)) + 1
-        # Converting URL argument to proper query string
-        encoded_get_args = urlencode(parsed_get_args, doseq=True)
-        # Creating new parsed result object based on provided with new
-        # URL arguments. Same thing happens inside of urlparse.
-        new_url = ParseResult(
-            parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-            parsed_url.params, encoded_get_args, parsed_url.fragment
-        ).geturl()
-        return new_url
-
-    def _next_url_next_page(self, url, page_html):
-        return urljoin(url, clean_xpath_res(page_html.xpath(self.next_page_xpath)))
-
-    def _next_url(self, url=None, page_html=None):
-        if self.page_argument is None:
-            next_link = self._next_url_next_page(url, page_html)
-        else:
-            next_link = self._next_url_page_argument(url)
-        return next_link
-
+        if self.company:
+            return self.company
+        if self.company_name_xpath:
+            page_html = self._get_html(self.url)
+            return clean_xpath_res(page_html.xpath(self.company_name_xpath))
+        return ""
     
     def _get_html(self, url):
-        page_content = requests.get(url).content
-        page_html = html.fromstring(page_content)
-        return page_html
+        return get_html(url, 
+                        use_chrome=self.use_chrome, 
+                        headless=self.headless, 
+                        force_new=self.force_new)
     
     def _parse_review(self, review_block):
         return dict()
@@ -117,7 +83,7 @@ class ReviewScraper:
         
         n_pages = self.get_n_pages()
         url = self.url
-        n_start = self._current_page(url)
+        n_start = current_page(url, self.page_argument)
         for n in range(n_start, n_pages + 1):
             page_html = self._get_html(url)
             page_info = self._parse_page(page_html)
@@ -139,7 +105,10 @@ class ReviewScraper:
             if self.is_last_page(page_html):
                 break
             self._pause(n - n_start + 1)
-            url = self._next_url(url, page_html)
+            url = next_url(url, 
+                            page_argument=self.page_argument,
+                            page_html=page_html,
+                            next_page_xpath=self.next_page_xpath)
     
     def scrap_website(self):
         self.scrap_n_reviews()

@@ -31,7 +31,19 @@ def avg_rating_month_data(df_reviews):
                         ).asfreq(
                             'MS', method="ffill"
                         ).stack().sort_index(level=1).reset_index()
+
     df_months = pd.concat([df_rating_star, df_avg])
+
+    df_months = pd.crosstab(
+            df_months["level_1"],
+            df_months["date_year_month_hide"],
+            df_months[0],
+            aggfunc="sum"
+    )
+
+    df_months.index = ["Average Rating up to Date", "Monthly Average Rating"]
+    df_months.columns.name = "Date"
+
     return df_months
 
 def n_rating_month(df_reviews):
@@ -50,6 +62,16 @@ def n_rating_month(df_reviews):
                             ).asfreq(
                                 'MS', fill_value=0
                             ).stack().sort_index(level=1).reset_index()
+
+    df_n_rating = pd.crosstab(
+            df_n_rating["rating_star_cleaned_hide"],
+            df_n_rating["date_year_month_hide"],
+            df_n_rating["text_cleaned_hide"],
+            aggfunc="sum")
+
+    df_n_rating.columns.name = "Date"
+    df_n_rating.index.name = "Rating"
+
     return df_n_rating
 
 def write_dfs(dict_dfs, filename):

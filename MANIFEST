@@ -3,6 +3,6 @@ setup.cfg
 setup.py
 scrapers/__init__.py
 scrapers/scrap_avisverifies.py
+scrapers/scrap_igraal.py
 scrapers/scrap_trustedshops.py
 scrapers/scrap_trustpilot.py
-scrapers/scraper_tools.py

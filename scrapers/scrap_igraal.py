@@ -4,26 +4,30 @@ import html
 import json
 from unidecode import unidecode
 from .tools.scraper_tools import ReviewScraper, clean_xpath_res, _aux_clean_number
+from .tools.html_tools import get_html
+from .tools.generic_tools import logger
 
-
-class TrustedshopsScraper(ReviewScraper):
+class IGraalScraper(ReviewScraper):
     def __init__(self, url, company=""):
-        page_argument = "page"
+        next_page_xpath = "//head/link[@rel='next']/@href"
         company_name_xpath = "//span[@class='shop-name']//text()"
 
         super().__init__(url=url,
-                        page_argument=page_argument,
+                        next_page_xpath=next_page_xpath,
                         company_name_xpath=company_name_xpath,
                         use_chrome=True,
+                        headless=False,
                         )
+        print("A window will open. If a captcha is required, please fill it. \
+Also close any popup that may appear.")
+
+        get_html(url)
     
     def _parse_review(self, review_block):
         info = dict()
         info["rating_star"] = review_block["reviewRating"]["ratingValue"]
-        info["date_full_hide"] = review_block["datePublished"]
         info["date"] = review_block["datePublished"][:10]
         info["review"] = review_block["reviewBody"]
-        info["language"] = review_block["inLanguage"]
         return info
 
     def clean_review(self, r):
@@ -45,20 +49,20 @@ class TrustedshopsScraper(ReviewScraper):
 
     def scrap_n_reviews(self):
         page_html = self._get_html(self.url)
-        xpath_n_reviews = "//h2[@class='summary-info']/span[1]//text()"
-        n_reviews_str = re.sub("[^0-9]", "", page_html.xpath(xpath_n_reviews)[0])
-        self.n_reviews = int(n_reviews_str.replace(" ", "").replace(".", ""))
+        script = page_html.xpath("//head/script[@type='application/ld+json']//text()")[0]
+        info = json.loads(script)
+        self.n_reviews = info["aggregateRating"]["ratingCount"]
     
     def get_n_pages(self):
-        n_pages = self.n_reviews // 20 + 1 # 20 reviews per page
+        n_pages = self.n_reviews // 50 + 1 # 50 reviews per page
         # Not optimised, it's the max # of pages, but often less
         return n_pages
 
     def is_last_page(self, page):
-        return page.xpath("//div[@page-index='next']/@style") == ["display: none;"]
+        return len(page.xpath(self.next_page_xpath)) == 0
 
 
-def scrap_reviews_trustedshops(url):
-    tss = TrustedshopsScraper(url)
+def scrap_reviews_igraal(tss, url):
+    # tss = IGraalScraper(url)
     info = tss.scrap_website()
     return info
